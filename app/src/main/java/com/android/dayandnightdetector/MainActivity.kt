@@ -6,7 +6,6 @@ import android.content.pm.PackageManager
 import android.location.Location
 import android.os.Build
 import android.os.Bundle
-import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import com.google.android.gms.location.*
@@ -72,7 +71,7 @@ class MainActivity : AppCompatActivity() {
             }
             PackageManager.PERMISSION_GRANTED -> {
                 textView.text = "getting location and then deciding if it is day or night..."
-                Log.d("AppLog", "PERMISSION_GRANTED")
+//                Log.d("AppLog", "PERMISSION_GRANTED")
                 //                fusedLocationClient.requestLocationUpdates(object: LocationRequest() {},null )
                 if (!requestingLocationUpdates)
                     startLocationUpdates()
