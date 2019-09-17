@@ -2,10 +2,10 @@ package com.android.dayandnightdetector
 
 import android.Manifest
 import android.annotation.TargetApi
+import android.content.Context
 import android.content.pm.PackageManager
 import android.location.Location
-import android.os.Build
-import android.os.Bundle
+import android.os.*
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import com.google.android.gms.location.*
@@ -40,7 +40,9 @@ class MainActivity : AppCompatActivity() {
     fun showDayNightInfo(location: Location) {
         val timeFormat = android.text.format.DateFormat.getTimeFormat(this)
         val twilightCalculator = TwilightCalculator
-        val twilightResult = twilightCalculator.calculateTwilight(System.currentTimeMillis(), location.latitude, location.longitude)
+        val date = Date()
+        val twilightResult =
+                twilightCalculator.calculateTwilight(date.time, location.latitude, location.longitude)
         val isDay = twilightResult.isDay
         val sunRiseText: String
         if (twilightResult.sunrise != -1L) {
@@ -58,7 +60,8 @@ class MainActivity : AppCompatActivity() {
         } else {
             sunSetText = "day/night never ends"
         }
-        textView.text = "got location:$location\n$sunRiseText\n$sunSetText\nis it day?$isDay"
+        val textOfNow = "current time to check:${formatDateUsingDeviceSettings(this, date)} ${formatTimeUsingDeviceSettings(this, date)}"
+        textView.text = "got location:$location\n$sunRiseText\n$sunSetText" + "\n$textOfNow \nis it day now? $isDay"
     }
 
     @TargetApi(Build.VERSION_CODES.M)
@@ -66,12 +69,13 @@ class MainActivity : AppCompatActivity() {
         super.onResume()
         when (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)) {
             PackageManager.PERMISSION_DENIED -> {
-                textView.text = "need location permission to calculate when is day/night in your area"
+                textView.text =
+                        "need location permission to calculate when is day/night in your area"
                 requestPermissions(arrayOf(Manifest.permission.ACCESS_COARSE_LOCATION), 1)
             }
             PackageManager.PERMISSION_GRANTED -> {
                 textView.text = "getting location and then deciding if it is day or night..."
-//                Log.d("AppLog", "PERMISSION_GRANTED")
+                //                Log.d("AppLog", "PERMISSION_GRANTED")
                 //                fusedLocationClient.requestLocationUpdates(object: LocationRequest() {},null )
                 if (!requestingLocationUpdates)
                     startLocationUpdates()
@@ -80,10 +84,18 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun startLocationUpdates() {
-        if (requestingLocationUpdates || ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED)
+        if (requestingLocationUpdates || ContextCompat.checkSelfPermission(
+                        this,
+                        Manifest.permission.ACCESS_COARSE_LOCATION
+                ) != PackageManager.PERMISSION_GRANTED
+        )
             return
         requestingLocationUpdates = true
-        fusedLocationClient.requestLocationUpdates(LocationRequest().setPriority(LocationRequest.PRIORITY_LOW_POWER), locationCallback, null)
+        fusedLocationClient.requestLocationUpdates(
+                LocationRequest().setPriority(LocationRequest.PRIORITY_LOW_POWER),
+                locationCallback,
+                null
+        )
     }
 
     override fun onPause() {
@@ -94,5 +106,21 @@ class MainActivity : AppCompatActivity() {
     private fun stopLocationUpdates() {
         requestingLocationUpdates = false
         fusedLocationClient.removeLocationUpdates(locationCallback)
+    }
+
+    companion object {
+        fun formatDateUsingDeviceSettings(context: Context, date: Date?): String {
+            if (date == null)
+                return ""
+            val dateFormat = android.text.format.DateFormat.getDateFormat(context)
+            return dateFormat.format(date)
+        }
+
+        fun formatTimeUsingDeviceSettings(context: Context, date: Date?): String {
+            if (date == null)
+                return ""
+            val timeFormat = android.text.format.DateFormat.getTimeFormat(context)
+            return timeFormat.format(date)
+        }
     }
 }
